@@ -1,0 +1,2 @@
+*.pbxproj -text
+android/java_pid8756.hprof filter=lfs diff=lfs merge=lfs -text

@@ -1,0 +1,354 @@
+import React, { Component } from 'react';
+import { Platform, PermissionsAndroid, View, Text, StyleSheet, StatusBar, Image, ImageBackground, FlatList, TouchableOpacity } from 'react-native';
+import { createStackNavigator } from '@react-navigation/stack';
+import { Container, Header, Left, Body, Right, Title, Subtitle, Button, Content, Footer, FooterTab, Icon, Thumbnail } from 'native-base';
+import { Card, CardTitle, CardContent, CardAction, CardButton, CardImage } from 'react-native-material-cards';
+import LinearGradient from 'react-native-linear-gradient';
+import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
+
+export default class mySubmission extends Component {
+	static navigationOptions = { header: null };
+	constructor(props) {
+		super(props);
+		this.state = {
+			data: [],
+			isLoading: true,
+			resourcePath: {},
+			filePath: {},
+			setFilePath: {},
+		};
+	}
+
+	componentDidMount() {
+		//this.getData();
+	}
+
+	getData() {
+		const url = global.baseURL + 'getMyEvent';
+		var postdata = 'parent_id=' + global.subID;
+		fetch(url, {
+			method: 'POST',
+			headers: {
+				Accept: 'application/json',
+				'Content-Type': 'application/x-www-form-urlencoded',
+			},
+			body: postdata,
+		})
+			.then((res) => res.json())
+			.then((res) => {
+				//console.log(res);
+				this.setState({
+					data: res,
+					isLoading: false,
+				});
+			})
+			.catch((error) => {
+				console.log(error);
+				//this.setState({ visible: false });
+			});
+	}
+
+	viewDetail(index) {
+		console.log('SS' + index);
+		console.log(this.state.data[index]);
+		global.eventData = this.state.data[index];
+		this.props.navigation.navigate('eventDetail');
+	}
+
+	gotoScreen(screenName) {
+		this.props.navigation.navigate(screenName);
+	}
+	/*   selectFile = () => {
+    var options = {
+      title: 'Select Image',
+      customButtons: [
+        { 
+          name: 'customOptionKey', 
+          title: 'Choose file from Custom Option' 
+        },
+      ],
+      storageOptions: {
+        skipBackup: true,
+        path: 'images',
+      },
+    };
+	
+	ImagePicker.showImagePicker(options, res => {
+      console.log('Response = ', res);
+
+      if (res.didCancel) {
+        console.log('User cancelled image picker');
+      } else if (res.error) {
+        console.log('ImagePicker Error: ', res.error);
+      } else if (res.customButton) {
+        console.log('User tapped custom button: ', res.customButton);
+        alert(res.customButton);
+      } else {
+        let source = res;
+        this.setState({
+          resourcePath: source,
+        });
+      }
+    });
+  };
+  
+  // Launch Camera
+  cameraLaunch = () => {
+    let options = {
+      storageOptions: {
+        skipBackup: true,
+        path: 'images',
+      },
+    };
+    ImagePicker.launchCamera(options, (res) => {
+      console.log('Response = ', res);
+
+      if (res.didCancel) {
+        console.log('User cancelled image picker');
+      } else if (res.error) {
+        console.log('ImagePicker Error: ', res.error);
+      } else if (res.customButton) {
+        console.log('User tapped custom button: ', res.customButton);
+        alert(res.customButton);
+      } else {
+        const source = { uri: res.uri };
+        console.log('response', JSON.stringify(res));
+        this.setState({
+          filePath: res,
+          fileData: res.data,
+          fileUri: res.uri
+        });
+      }
+    });
+  }
+
+  imageGalleryLaunch = () => {
+    let options = {
+      storageOptions: {
+        skipBackup: true,
+        path: 'images',
+      },
+    };
+
+    ImagePicker.launchImageLibrary(options, (res) => {
+      console.log('Response = ', res);
+
+      if (res.didCancel) {
+        console.log('User cancelled image picker');
+      } else if (res.error) {
+        console.log('ImagePicker Error: ', res.error);
+      } else if (res.customButton) {
+        console.log('User tapped custom button: ', res.customButton);
+        alert(res.customButton);
+      } else {
+        const source = { uri: res.uri };
+        console.log('response', JSON.stringify(res));
+        this.setState({
+          filePath: res,
+          fileData: res.data,
+          fileUri: res.uri
+        });
+      }
+    });
+  }*/
+
+	requestCameraPermission = async () => {
+		if (Platform.OS === 'android') {
+			try {
+				const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.CAMERA, {
+					title: 'Camera Permission',
+					message: 'App needs camera permission',
+				});
+				// If CAMERA Permission is granted
+				return granted === PermissionsAndroid.RESULTS.GRANTED;
+			} catch (err) {
+				console.warn(err);
+				return false;
+			}
+		} else return true;
+	};
+
+	requestExternalWritePermission = async () => {
+		if (Platform.OS === 'android') {
+			try {
+				const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE, {
+					title: 'External Storage Write Permission',
+					message: 'App needs write permission',
+				});
+				// If WRITE_EXTERNAL_STORAGE Permission is granted
+				return granted === PermissionsAndroid.RESULTS.GRANTED;
+			} catch (err) {
+				console.warn(err);
+				alert('Write permission err', err);
+			}
+			return false;
+		} else return true;
+	};
+
+	captureImage = async (type) => {
+		let options = {
+			mediaType: type,
+			maxWidth: 300,
+			maxHeight: 550,
+			quality: 1,
+			videoQuality: 'low',
+			durationLimit: 30, //Video max duration in seconds
+			saveToPhotos: true,
+		};
+		let isCameraPermitted = await this.requestCameraPermission();
+		let isStoragePermitted = await this.requestExternalWritePermission();
+		if (isCameraPermitted && isStoragePermitted) {
+			launchCamera(options, (response) => {
+				console.log('Response = ', response);
+
+				if (response.didCancel) {
+					alert('User cancelled camera picker');
+					return;
+				} else if (response.errorCode == 'camera_unavailable') {
+					alert('Camera not available on device');
+					return;
+				} else if (response.errorCode == 'permission') {
+					alert('Permission not satisfied');
+					return;
+				} else if (response.errorCode == 'others') {
+					alert(response.errorMessage);
+					return;
+				}
+				console.log('base64 -> ', response.base64);
+				console.log('uri -> ', response.uri);
+				console.log('width -> ', response.width);
+				console.log('height -> ', response.height);
+				console.log('fileSize -> ', response.fileSize);
+				console.log('type -> ', response.type);
+				console.log('fileName -> ', response.fileName);
+				this.setState({
+					filePath: response,
+				});
+			});
+		}
+	};
+
+	chooseFile = (type) => {
+		let options = {
+			mediaType: type,
+			maxWidth: 300,
+			maxHeight: 550,
+			quality: 1,
+		};
+		launchImageLibrary(options, (response) => {
+			console.log('Response = ', response);
+
+			if (response.didCancel) {
+				alert('User cancelled camera picker');
+				return;
+			} else if (response.errorCode == 'camera_unavailable') {
+				alert('Camera not available on device');
+				return;
+			} else if (response.errorCode == 'permission') {
+				alert('Permission not satisfied');
+				return;
+			} else if (response.errorCode == 'others') {
+				alert(response.errorMessage);
+				return;
+			}
+			console.log('base64 -> ', response.base64);
+			console.log('uri -> ', response.uri);
+			console.log('width -> ', response.width);
+			console.log('height -> ', response.height);
+			console.log('fileSize -> ', response.fileSize);
+			console.log('type -> ', response.type);
+			console.log('fileName -> ', response.fileName);
+			this.setState({
+				filePath: response,
+			});
+		});
+	};
+
+	uploadMedia = () => {
+		return null;
+	};
+
+	render() {
+		return (
+			<Container>
+				<Header style={{ backgroundColor: '#FFFFFF', paddingLeft: 0, paddingRight: 0 }}>
+					<ImageBackground source={require('../assets/images/header-bg.jpg')} style={{ width: '100%', flexDirection: 'row' }}>
+						<Left style={{ flex: 0.2 }}>
+							<Text></Text>
+						</Left>
+						<Body style={{ flex: 0.6, alignItem: 'center' }}>
+							<Title style={{ color: '#000000', justifyContent: 'center', alignItems: 'stretch', alignSelf: 'center' }}>EventHome</Title>
+						</Body>
+						<Right style={{ flex: 0.2, paddingRight: 2 }}>
+							<Thumbnail small source={{ uri: global.coreURL + 'upload/raj.jpg' }} />
+						</Right>
+					</ImageBackground>
+				</Header>
+
+				<Content>
+					<LinearGradient colors={['#fccd15', '#f96305']} style={styles.container} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ flex: 1 }}>
+						<Text style={[styles.titleText, { color: '#FFF', fontSize: 18 }]}>Upload Media to Submit Yourself</Text>
+						<View style={styles.container}>
+							{/* <Image
+						  source={{
+							uri: 'data:image/jpeg;base64,' + filePath.data,
+						  }}
+						  style={styles.imageStyle}
+						/> */}
+							<Image source={{ uri: this.state.filePath.uri }} style={{ width: 200, height: 200 }} />
+							<Text style={styles.textStyle}>{this.state.filePath.uri}</Text>
+							<View style={{ paddingHorizontal: 10, paddingVertical: 10 }}>
+								<TouchableOpacity activeOpacity={0.5} style={styles.buttonStyle} onPress={() => this.captureImage('photo')}>
+									<Text style={styles.textStyle}>Launch Camera for Image</Text>
+								</TouchableOpacity>
+								<TouchableOpacity activeOpacity={0.5} style={styles.buttonStyle} onPress={() => this.captureImage('video')}>
+									<Text style={styles.textStyle}>Launch Camera for Video</Text>
+								</TouchableOpacity>
+								<TouchableOpacity activeOpacity={0.5} style={styles.buttonStyle} onPress={() => this.chooseFile('photo')}>
+									<Text style={styles.textStyle}>Choose Image</Text>
+								</TouchableOpacity>
+								<TouchableOpacity activeOpacity={0.5} style={styles.buttonStyle} onPress={() => this.chooseFile('video')}>
+									<Text style={styles.textStyle}>Choose Video</Text>
+								</TouchableOpacity>
+							</View>
+							<View style={{ padding: 5, paddingLeft: 40, paddingRight: 45 }}>
+								<CardButton
+									onPress={() => this.uploadMedia()}
+									title="Submit Media"
+									style={{ borderWidth: 3, borderRadius: 10, backgroundColor: '#A7F311', borderColor: '#64CE1F' }}
+									titleStyle={{ color: '#7011DC' }}
+								/>
+							</View>
+						</View>
+					</LinearGradient>
+				</Content>
+
+				<Footer style={{ backgroundColor: '#FFFFFF', paddingLeft: 0, paddingRight: 0 }}>
+					<FooterTab style={{ backgroundColor: '#FFFFFF' }}>
+						<Button vertical style={{ backgroundColor: '#e6ffff' }} onPress={() => this.gotoScreen('eventHome')}>
+							<Icon type="FontAwesome" name="home" active />
+							<Text>Event</Text>
+						</Button>
+						<Button vertical onPress={() => this.gotoScreen('eventHome')}>
+							<Icon type="FontAwesome" name="trophy" />
+							<Text>Enrollment</Text>
+						</Button>
+						<Button vertical onPress={() => this.gotoScreen('eventHome')}>
+							<Icon type="FontAwesome" name="eye" />
+							<Text>Notification</Text>
+						</Button>
+						<Button vertical onPress={() => this.gotoScreen('eventHome')}>
+							<Icon type="FontAwesome" name="paper-plane" />
+							<Text>Contact</Text>
+						</Button>
+					</FooterTab>
+				</Footer>
+			</Container>
+		);
+	}
+}
+var styles = StyleSheet.create({
+	buttonStyle: {
+		padding: 8,
+	},
+});

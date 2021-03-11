@@ -1,0 +1,1 @@
+adb -s 42003a76061745d7 reverse tcp:3000 tcp:3000

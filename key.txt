@@ -1,0 +1,16 @@
+keytool -genkeypair -v -keystore eventchamp.keystore -alias eventchamp -keyalg RSA -keysize 2048 -validity 10000
+
+password: eventchamp
+
+What is your first and last name?
+  [Unknown]:  Kousik Kayal
+What is the name of your organizational unit?
+  [Unknown]:  IT
+What is the name of your organization?
+  [Unknown]:  Clematis Software Technology Pvt. Ltd.
+What is the name of your City or Locality?
+  [Unknown]:  Kolkata
+What is the name of your State or Province?
+  [Unknown]:  WB
+What is the two-letter country code for this unit?
+  [Unknown]:  IN
